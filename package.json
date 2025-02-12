@@ -1,0 +1,14 @@
+{
+  "name": "chef-s-favourite-meals-app",
+  "version": "1.0.0",
+  "description": "A JavaScript application that interacts with The Meal DB API to take and complete orders of the chef's favourite meals.",
+  "main": "index.html",
+  "scripts": {
+    "deploy": "gh-pages -d ."
+  },
+  "author": "Sipho Sisusa",
+  "license": "MIT",
+  "devDependencies": {
+    "gh-pages": "^3.2.3"
+  }
+}
