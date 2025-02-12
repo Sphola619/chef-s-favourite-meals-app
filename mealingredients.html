@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chef's Favourite Meals</title>
+</head>
+<body>
+  <h1>Welcome to the Chef's Favourites App</h1>
+
+  <!-- Added javascript code in html file as download was rejecting javascript code in a seperate file -->
+  <script>
+    async function takeOrder() {
+      let ingredient = ""; // Initialize ingredient variable
+
+      // Step 1: Prompt for main ingredient
+      while (!ingredient) {
+        ingredient = prompt("Enter the main ingredient for your meal:");
+        if (!ingredient) {
+          alert("Please provide a valid ingredient.");
+        }
+      }
+
+      // Convert input to lowercase and replace spaces with underscores
+      ingredient = ingredient.toLowerCase().replace(/\s+/g, "_");
+
+      while (true) {
+        try {
+          // Step 2: Fetch meals from MealDB API
+          const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`);
+          const data = await response.json();
+
+          // Step 3: Handle no meals found
+          if (!data.meals) {
+            ingredient = prompt(`No meals found for the ingredient: ${ingredient}. Please try another ingredient.`);
+            if (!ingredient) {
+              alert("Order canceled.");
+              return;
+            }
+            ingredient = ingredient.toLowerCase().replace(/\s+/g, "_");
+            continue;
+          }
+
+          // Step 4: Get or initialize last order number
+          let lastOrderNumber = Number(sessionStorage.getItem("lastOrderNumber")) || 0;
+
+          // Step 5: Select a random meal
+          const randomMeal = data.meals[Math.floor(Math.random() * data.meals.length)];
+
+          // Step 6: Create a new order
+          const order = {
+            orderNumber: ++lastOrderNumber, // Increment the last order number
+            description: randomMeal.strMeal,
+            status: "Incomplete",
+          };
+
+          // Save the new last order number
+          sessionStorage.setItem("lastOrderNumber", lastOrderNumber);
+
+          // Step 7: Save the order to sessionStorage
+          let orders = JSON.parse(sessionStorage.getItem("orders")) || [];
+          orders.push(order);
+          sessionStorage.setItem("orders", JSON.stringify(orders));
+
+          alert(`Order Details:\nOrder Number: ${order.orderNumber}\nMeal: ${order.description}\nStatus: ${order.status}`);
+          break;
+
+        } catch (error) {
+          alert("An error occurred while fetching your order. Please try again later.");
+          console.error(error);
+          return;
+        }
+      }
+
+      // Step 8: Prompt user to mark orders as complete
+      manageOrders();
+    }
+
+    function manageOrders() {
+      let orders = JSON.parse(sessionStorage.getItem("orders")) || [];
+
+      // Filter incomplete orders
+      let incompleteOrders = orders.filter(order => order.status === "Incomplete");
+
+      if (incompleteOrders.length === 0) {
+        alert("No incomplete orders available.");
+        return;
+      }
+
+      let orderList = incompleteOrders.map(order => `Order Number: ${order.orderNumber}, Meal: ${order.description}`).join("\n");
+      let userAction = prompt(`Incomplete Orders:\n${orderList}\n\nEnter the order number to mark as complete, or 0 to skip:`);
+
+      if (userAction === "0" || !userAction) {
+        alert("No changes made.");
+        return;
+      }
+
+      // Step 9: Update the status of the selected order
+      let orderNumber = Number(userAction);
+      let orderToUpdate = orders.find(order => order.orderNumber === orderNumber);
+
+      if (!orderToUpdate) {
+        alert("Invalid order number. Please try again.");
+        return manageOrders(); // Retry
+      }
+
+      orderToUpdate.status = "Complete";
+      sessionStorage.setItem("orders", JSON.stringify(orders));
+      alert(`Order Number ${orderNumber} marked as complete.`);
+    }
+
+    // Call the function
+    takeOrder();
+  </script>
+</body>
+</html>
